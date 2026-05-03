@@ -42,5 +42,6 @@ build/
 .DS_Store
 .AppleDouble
 
-# Flash plugin binary (distribute separately — users supply their own)
-PepperFlashPlayer.plugin/
+# Flash plugin binaries — bundled in flash/ directory, tracked by git
+# Exclude only the old root-level copy (used before bundling)
+/PepperFlashPlayer.plugin/

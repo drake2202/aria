@@ -40,17 +40,37 @@ def _find_first(relative_path: str) -> Path:
 
 
 def _find_flash_plugin() -> Path:
-    candidates = [
-        _find_first("flash/libpepflashplayer.so"),
-        _find_first("PepperFlashPlayer.plugin/Contents/MacOS/PepperFlashPlayer"),
-        Path("/usr/share/aria/flash/libpepflashplayer.so"),
-        Path.home() / ".local" / "share" / "Aria" / "flash" / "libpepflashplayer.so",
-        Path.home() / ".config" / "Aria" / "flash" / "libpepflashplayer.so",
-    ]
-    for candidate in candidates:
+    """
+    Resolve the correct bundled PepperFlash plugin for the current platform/arch.
+
+    Bundled layout (tracked in git):
+        flash/linux/x64/libpepflashplayer.so
+        flash/linux/ia32/libpepflashplayer.so
+        flash/mac/x64/PepperFlashPlayer.plugin/Contents/MacOS/PepperFlashPlayer
+
+    Falls back to legacy paths for backwards compatibility.
+    """
+    import platform as _platform
+
+    arch = _platform.machine().lower()
+    arch_dir = "ia32" if arch in ("i386", "i686", "x86") else "x64"
+
+    if sys.platform == "darwin":
+        bundled = _find_first(
+            f"flash/mac/{arch_dir}/PepperFlashPlayer.plugin/Contents/MacOS/PepperFlashPlayer"
+        )
+        legacy = _find_first("PepperFlashPlayer.plugin/Contents/MacOS/PepperFlashPlayer")
+    else:
+        bundled = _find_first(f"flash/linux/{arch_dir}/libpepflashplayer.so")
+        legacy = _find_first("flash/libpepflashplayer.so")
+
+    system_linux = Path("/usr/share/aria/flash/libpepflashplayer.so")
+    xdg_linux = Path.home() / ".local" / "share" / "Aria" / "flash" / "libpepflashplayer.so"
+
+    for candidate in [bundled, legacy, system_linux, xdg_linux]:
         if candidate.exists():
             return candidate
-    return candidates[0]
+    return bundled
 
 
 APP_DIR = _candidate_roots()[0]
