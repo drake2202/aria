@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual environment
+linux/.venv/
+
+# XDG runtime / user data (not part of the project)
+linux/.lock
+logs/archive/
+linux/reports/
+linux/*REVERSE_ENGINEERING*.md
+linux/reverse-engineer.sh
+
+# Original Windows launcher binaries (proprietary, not redistributed)
+*.exe
+*.dll
+*.ocx
+*.dat
+*.debug
+*.manifest
+*.qm
+
+# Flash plugin binary (distribute separately)
+flash/libpepflashplayer.so
+
+# Build artifacts
+*.AppImage
+*.spec
+dist/
+build/
+
+# Editor
+.vscode/
+*.swp
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+
+# Flash plugin binary (distribute separately — users supply their own)
+PepperFlashPlayer.plugin/

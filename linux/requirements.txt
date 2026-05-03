@@ -1,0 +1,4 @@
+PyQt5>=5.15,<5.16
+PyQtWebEngine>=5.15,<5.16
+aiohttp>=3.9
+requests>=2.28

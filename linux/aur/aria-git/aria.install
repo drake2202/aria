@@ -1,0 +1,18 @@
+post_install() {
+  cat <<'EOF'
+Aria installed.
+
+PepperFlash setup:
+  1) Place libpepflashplayer.so at one of:
+     - /usr/share/aria/flash/libpepflashplayer.so
+     - ~/.local/share/Aria/flash/libpepflashplayer.so
+     - ~/.config/Aria/flash/libpepflashplayer.so
+
+Then launch with:
+  aria
+EOF
+}
+
+post_upgrade() {
+  post_install
+}
