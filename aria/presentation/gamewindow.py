@@ -20,15 +20,19 @@ from PyQt5.QtWidgets import (
     QInputDialog,
 )
 
-APP_NAME = "Aria"
+
+APP_NAME  = "Aria"
 APP_TITLE = "Aria — Legend Online"
-from aria.infrastructure.config import PROXY_HOST, PROXY_PORT, LO_REGIONS, SERVER_LIST_URL, account_key
+
+from aria.infrastructure.config import (
+    PROXY_HOST, PROXY_PORT, LO_REGIONS, SERVER_LIST_URL, SERVER_CACHE_DIR,
+)
 from aria.infrastructure.account_store import list_local_accounts, load_account_session
-from aria.presentation.gameview import GameView
 from aria.infrastructure.serverlist import CachedServerRepository
+from aria.presentation.gameview import GameView
 from aria.domain.models import GameServer
 
-log = logging.getLogger("gamewindow")
+log = logging.getLogger("aria.gamewindow")
 
 _MAX_LOGIN_RETRIES = 8
 _LOGIN_RETRY_MS = 1200
@@ -37,7 +41,7 @@ _LOGIN_RETRY_MS = 1200
 class GameWindow(QMainWindow):
     """Game window with Flash-enabled WebEngine."""
 
-    def __init__(self, server, email="", password="", parent=None):
+    def __init__(self, server, email="", password="", launcher=None, parent=None):
         super().__init__(parent)
         self.setWindowTitle(f"{APP_TITLE} — {server.display_name}")
         self.resize(1280, 800)
@@ -201,16 +205,15 @@ class GameWindow(QMainWindow):
     def _resolve_server_for_account(self, region, server_id):
         if not region or not server_id:
             return None
-        model = ServerListModel()
-        model.fetch(region)
-        for server in model.servers:
-            if server.server_id == int(server_id):
-                return server
+        repo = CachedServerRepository(cache_dir=SERVER_CACHE_DIR)
+        server = repo.find_by_id(region, int(server_id))
+        if server:
+            return server
         return GameServer(
             server_id=int(server_id),
             name=f"S{server_id}",
             fullname=f"Server {server_id}",
-            region=region
+            region=region,
         )
 
     def _replace_game_view(self, account_email):
@@ -230,19 +233,21 @@ class GameWindow(QMainWindow):
         old_view.deleteLater()
 
     def _test_flash(self):
-        from aria.infrastructure.config import PEPPER_FLASH_SO
-        if PEPPER_FLASH_SO.exists():
-            # Navigate to chrome://plugins or a flash test page
+        from aria.infrastructure.flash.macos import MacOSFlashAdapter
+        from aria.infrastructure.flash.linux import LinuxFlashAdapter
+        import sys
+        adapter = MacOSFlashAdapter() if sys.platform == "darwin" else LinuxFlashAdapter()
+        plugin = adapter.plugin_path()
+        if plugin.exists():
             self._game_view.load_url("https://helpx.adobe.com/flash-player.html")
             QMessageBox.information(
                 self, "Flash Plugin",
-                f"PepperFlash: {PEPPER_FLASH_SO}\n\n"
-                "Flash test page loaded.",
+                f"PepperFlash found:\n{plugin}\n\nFlash test page loaded.",
             )
         else:
             QMessageBox.warning(
                 self, "Missing Flash Plugin",
-                f"PepperFlash not found.\n\nExpected: {PEPPER_FLASH_SO}",
+                f"PepperFlash not found.\nExpected: {plugin}",
             )
 
     def _show_about(self):

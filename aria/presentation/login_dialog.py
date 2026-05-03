@@ -15,26 +15,27 @@ from PyQt5.QtWidgets import (
     QHBoxLayout,
 )
 
-APP_TITLE = "Aria — Legend Online"
-from aria.infrastructure.config import LO_REGIONS, account_key
+from aria.infrastructure.config import LO_REGIONS, account_key, SERVER_CACHE_DIR
 from aria.infrastructure.account_store import load_last_email, load_account_session, save_account_session
-from aria.infrastructure.serverlist import ServerListModel, GameServer
+from aria.infrastructure.serverlist import CachedServerRepository
+from aria.domain.models import GameServer
 
-log = logging.getLogger("login")
+APP_TITLE = "Aria — Legend Online"
+log = logging.getLogger("aria.login")
 
 
 class _FetchThread(QThread):
     """Fetch server list off the main thread."""
-    done = pyqtSignal()
+    done = pyqtSignal(list)
 
-    def __init__(self, model, gamecode, parent=None):
+    def __init__(self, repo: CachedServerRepository, gamecode: str, parent=None):
         super().__init__(parent)
-        self._model = model
+        self._repo = repo
         self._gamecode = gamecode
 
     def run(self):
-        self._model.fetch(self._gamecode)
-        self.done.emit()
+        servers = self._repo.get_servers(self._gamecode)
+        self.done.emit(servers)
 
 
 class LoginDialog(QDialog):
@@ -43,14 +44,15 @@ class LoginDialog(QDialog):
     # emits (GameServer, email, password)
     server_chosen = pyqtSignal(object, str, str)
 
-    def __init__(self, parent=None):
+    def __init__(self, launcher=None, parent=None):
         super().__init__(parent)
         self.setObjectName("LoginDialog")
         self.setWindowTitle(APP_TITLE)
         self.setFixedSize(420, 370)
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
 
-        self._server_model = ServerListModel()
+        self._repo = CachedServerRepository(cache_dir=SERVER_CACHE_DIR)
+        self._servers: list[GameServer] = []
         self._last_email = load_last_email()
         self._last_region, self._last_server_id, self._last_password = load_account_session(self._last_email)
         self._loaded_email_key = account_key(self._last_email)
@@ -131,11 +133,12 @@ class LoginDialog(QDialog):
         self.lblStatus.style().polish(self.lblStatus)
         self.btnPlay.setEnabled(False)
 
-        self._fetch_thread = _FetchThread(self._server_model, gamecode, self)
+        self._fetch_thread = _FetchThread(self._repo, gamecode, self)
         self._fetch_thread.done.connect(self._on_fetch_done)
         self._fetch_thread.start()
 
-    def _on_fetch_done(self):
+    def _on_fetch_done(self, servers: list):
+        self._servers = servers
         self.btnPlay.setEnabled(True)
         self._populate_server_combo()
 
@@ -144,19 +147,18 @@ class LoginDialog(QDialog):
 
     def _populate_server_combo(self):
         self.cbServer.clear()
-        if not self._server_model.servers:
-            self.lblStatus.setText("Failed to fetch server list!")
+        if not self._servers:
+            self.lblStatus.setText("Failed to fetch server list — type a server ID manually")
             self.lblStatus.setProperty("error", True)
             self.lblStatus.style().unpolish(self.lblStatus)
             self.lblStatus.style().polish(self.lblStatus)
             return
 
-        servers = sorted(self._server_model.servers, key=lambda s: s.server_id, reverse=True)
+        servers = sorted(self._servers, key=lambda s: s.server_id, reverse=True)
         for s in servers:
             prefix = "★ " if s.recommended else ""
             self.cbServer.addItem(f"{prefix}{s.display_name}", s)
 
-        # Restore last server if matching this region
         current_region = self.cbRegion.currentData()
         if self._last_server_id and self._last_region == current_region:
             for i in range(self.cbServer.count()):
@@ -186,8 +188,7 @@ class LoginDialog(QDialog):
         else:
             self._fetch_servers()
 
-    def _find_server_by_id(self, sid):
-        """Find a server in the loaded list by its numeric ID."""
+    def _find_server_by_id(self, sid: int) -> GameServer | None:
         for i in range(self.cbServer.count()):
             srv = self.cbServer.itemData(i)
             if srv and srv.server_id == sid:

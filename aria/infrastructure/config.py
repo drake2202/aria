@@ -32,8 +32,13 @@ else:
     CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))           / "Aria"
 
 SERVER_CACHE_DIR = CACHE_DIR / "servers"
+REDIRECT_CACHE   = CACHE_DIR / "RedirectCache.dat"
 PROXY_HOST = "127.0.0.1"
 PROXY_PORT = 8125
+
+KNOWN_RES_SERVERS: dict[str, str] = {
+    "smokih5-pl-cdn": "smokih5-pl-cdn.brov.site",
+}
 
 # Legend Online regions: gamecode → (display_name, domain_prefix)
 LO_REGIONS: dict[str, tuple[str, str]] = {

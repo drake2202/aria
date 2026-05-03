@@ -20,7 +20,7 @@ from PyQt5.QtWidgets import (
     QComboBox,
 )
 
-from .config import MAPS_DIR, MAP_CATEGORIES
+from aria.infrastructure.config import MAPS_DIR, MAP_CATEGORIES
 
 log = logging.getLogger("maps")
 
