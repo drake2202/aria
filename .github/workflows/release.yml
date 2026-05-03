@@ -25,7 +25,7 @@ jobs:
           pip install -e .
 
       - name: Build AppImage
-        run: bash scripts/build-appimage.sh
+        run: bash scripts/build-linux.sh
 
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
@@ -47,10 +47,10 @@ jobs:
         run: |
           pip install pyinstaller
           pip install -e .
-          brew install create-dmg
+          brew install create-dmg || true
 
       - name: Build DMG
-        run: bash scripts/build-dmg.sh
+        run: bash scripts/build-macos.sh
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4
