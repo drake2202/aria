@@ -21,6 +21,7 @@ from pathlib import Path
 if sys.platform == "darwin":
     # Required for QtWebEngine inside PyInstaller .app bundle on macOS
     os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--no-sandbox"
+    os.environ["QTWEBENGINE_DISABLE_SANDBOX"] = "1"
     from aria.infrastructure.flash.macos import MacOSFlashAdapter as _FlashAdapter
 else:
     from aria.infrastructure.flash.linux import LinuxFlashAdapter as _FlashAdapter
