@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "aria"
 version = "1.1.0"
 description = "Native macOS/Linux launcher for Legend Online (Flash)"
-readme = "linux/README.md"
+readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = [
@@ -14,6 +14,7 @@ dependencies = [
     "PyQtWebEngine>=5.15",
     "requests>=2.28",
     "keyring>=24.0",
+    "aiohttp>=3.8",
 ]
 
 [project.optional-dependencies]

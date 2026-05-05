@@ -1,9 +1,0 @@
-[Desktop Entry]
-Type=Application
-Name=Aria
-Comment=Linux-native Legend Online client
-Exec=aria
-Terminal=false
-Categories=Game;
-StartupNotify=true
-StartupWMClass=Aria
