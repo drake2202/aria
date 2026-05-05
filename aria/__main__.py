@@ -17,8 +17,10 @@ import sys
 import threading
 from pathlib import Path
 
-# ── Flash flags MUST be configured before any Qt import ──────────────────────
+# ── Flash flags and Qt Env MUST be configured before any Qt import ─────────────
 if sys.platform == "darwin":
+    # Required for QtWebEngine inside PyInstaller .app bundle on macOS
+    os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--no-sandbox"
     from aria.infrastructure.flash.macos import MacOSFlashAdapter as _FlashAdapter
 else:
     from aria.infrastructure.flash.linux import LinuxFlashAdapter as _FlashAdapter
