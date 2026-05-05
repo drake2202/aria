@@ -6,14 +6,10 @@ __pycache__/
 .Python
 
 # Virtual environment
-linux/.venv/
+.venv/
 
 # XDG runtime / user data (not part of the project)
-linux/.lock
 logs/archive/
-linux/reports/
-linux/*REVERSE_ENGINEERING*.md
-linux/reverse-engineer.sh
 
 # Original Windows launcher binaries (proprietary, not redistributed)
 *.exe
