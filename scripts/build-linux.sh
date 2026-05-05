@@ -3,6 +3,12 @@ set -e
 
 echo "Building Aria for Linux..."
 
+# Auto-activate local venv if it exists
+if [ -d ".venv" ]; then
+    echo "Activating virtual environment..."
+    source .venv/bin/activate
+fi
+
 # Build with PyInstaller
 pyinstaller --clean -y aria.spec
 
