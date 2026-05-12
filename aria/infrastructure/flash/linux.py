@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import platform
 from pathlib import Path
 
@@ -17,18 +18,43 @@ _ARCH_MAP: dict[str, str] = {
     "x86": "ia32",
     "x86_64": "x64",
     "amd64": "x64",
+    "armv7l": "armhf",
+    "armv8l": "armhf",
     "aarch64": "arm64",
     "arm64": "arm64",
 }
 
 
+def _resolve_arch_dir() -> str:
+    override_raw = os.getenv("ARIA_FLASH_ARCH", "").strip().lower()
+    if override_raw:
+        override_map = {
+            "32": "ia32",
+            "64": "x64",
+            "ia32": "ia32",
+            "x64": "x64",
+            "arm64": "arm64",
+            "armhf": "armhf",
+        }
+        arch_dir = override_map.get(override_raw)
+        if arch_dir:
+            return arch_dir
+        log.warning(
+            "Invalid ARIA_FLASH_ARCH='%s'; supported values: 32, 64, ia32, x64, arm64, armhf",
+            override_raw,
+        )
+
+    arch = platform.machine().lower()
+    arch_dir = _ARCH_MAP.get(arch)
+    if arch_dir is None:
+        log.warning("Unrecognized Linux architecture '%s'; defaulting to x64 flash path", arch)
+        return "x64"
+    return arch_dir
+
+
 class LinuxFlashAdapter(FlashAdapter):
     def plugin_path(self) -> Path:
-        arch = platform.machine().lower()
-        arch_dir = _ARCH_MAP.get(arch)
-        if arch_dir is None:
-            log.warning("Unrecognized Linux architecture '%s'; defaulting to x64 flash path", arch)
-            arch_dir = "x64"
+        arch_dir = _resolve_arch_dir()
         bundled = _find(f"flash/linux/{arch_dir}/libpepflashplayer.so")
         if bundled.exists():
             return bundled

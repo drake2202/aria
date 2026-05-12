@@ -9,12 +9,102 @@
 #
 # Usage:
 #   bash scripts/install.sh
+#   bash scripts/install.sh [32|64|auto]
 
 set -e
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PYTHON_MIN_MAJOR=3
 PYTHON_MIN_MINOR=10
+INSTALL_MODE="${1:-auto}"
+
+usage() {
+    cat <<EOF
+Usage: bash scripts/install.sh [32|64|auto]
+
+  auto (default): choose Flash plugin arch from host architecture
+  32            : force 32-bit Flash arch (ia32 on x86, armhf on ARM)
+  64            : force 64-bit Flash arch (x64 on x86, arm64 on ARM)
+
+Note: requesting 32/64 requires matching Python process bitness.
+EOF
+}
+
+validate_mode() {
+    case "$INSTALL_MODE" in
+        auto|32|64) ;;
+        -h|--help|help)
+            usage
+            exit 0
+            ;;
+        *)
+            echo "Error: invalid mode '$INSTALL_MODE'." >&2
+            usage
+            exit 1
+            ;;
+    esac
+}
+
+python_bitness() {
+    python3 - <<'PY'
+import struct
+print(struct.calcsize("P") * 8)
+PY
+}
+
+resolve_flash_arch() {
+    local host_arch="$1"
+    case "$INSTALL_MODE" in
+        auto)
+            case "$host_arch" in
+                x86_64|amd64) echo "x64" ;;
+                i386|i486|i586|i686|x86) echo "ia32" ;;
+                aarch64|arm64) echo "arm64" ;;
+                armv7l|armv8l) echo "armhf" ;;
+                *) echo "x64" ;;
+            esac
+            ;;
+        32)
+            case "$host_arch" in
+                x86_64|amd64|i386|i486|i586|i686|x86) echo "ia32" ;;
+                aarch64|arm64|armv7l|armv8l) echo "armhf" ;;
+                *)
+                    echo "Error: cannot map host architecture '$host_arch' to 32-bit Flash arch." >&2
+                    exit 1
+                    ;;
+            esac
+            ;;
+        64)
+            case "$host_arch" in
+                x86_64|amd64|i386|i486|i586|i686|x86) echo "x64" ;;
+                aarch64|arm64|armv7l|armv8l) echo "arm64" ;;
+                *)
+                    echo "Error: cannot map host architecture '$host_arch' to 64-bit Flash arch." >&2
+                    exit 1
+                    ;;
+            esac
+            ;;
+    esac
+}
+
+validate_bitness_mode() {
+    local bits="$1"
+    case "$INSTALL_MODE" in
+        32)
+            if [ "$bits" -ne 32 ]; then
+                echo "Error: install mode '32' requires 32-bit Python/userspace (detected ${bits}-bit Python)." >&2
+                echo "Run this installer from a 32-bit environment, then launch Aria from that same environment." >&2
+                exit 1
+            fi
+            ;;
+        64)
+            if [ "$bits" -ne 64 ]; then
+                echo "Error: install mode '64' requires 64-bit Python/userspace (detected ${bits}-bit Python)." >&2
+                exit 1
+            fi
+            ;;
+    esac
+}
 
 # ---------------------------------------------------------------------------
 # Python version check
@@ -197,6 +287,12 @@ PY
         echo "or pip wheels on supported platforms, then re-run this script."
         exit 1
     fi
+
+    local activate_file="$REPO_ROOT/.venv/bin/activate"
+    if [ -f "$activate_file" ]; then
+        sed -i '/^export ARIA_FLASH_ARCH=/d' "$activate_file"
+        printf '\nexport ARIA_FLASH_ARCH="%s"\n' "$FLASH_ARCH" >> "$activate_file"
+    fi
 }
 
 # ---------------------------------------------------------------------------
@@ -204,6 +300,12 @@ PY
 # ---------------------------------------------------------------------------
 ARCH=$(uname -m)
 echo "Host architecture: $ARCH"
+validate_mode
+PY_BITS=$(python_bitness)
+echo "Python bitness: ${PY_BITS}-bit"
+validate_bitness_mode "$PY_BITS"
+FLASH_ARCH=$(resolve_flash_arch "$ARCH")
+echo "Flash plugin arch mode: $INSTALL_MODE (ARIA_FLASH_ARCH=$FLASH_ARCH)"
 
 check_python_version
 DISTRO=$(detect_distro)
@@ -214,3 +316,4 @@ echo ""
 echo "Installation complete!"
 echo "To start Aria, run:"
 echo "  source .venv/bin/activate && python3 -m aria"
+echo "(ARIA_FLASH_ARCH is set in .venv/bin/activate to: $FLASH_ARCH)"

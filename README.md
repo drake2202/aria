@@ -36,6 +36,16 @@ The quickest way is the included distro-aware installer, which works on **any ma
 bash scripts/install.sh
 ```
 
+Optional: select Flash plugin arch mode during install:
+
+```bash
+bash scripts/install.sh 32   # 32-bit mode (ia32 on x86, armhf on ARM)
+bash scripts/install.sh 64   # 64-bit mode (x64 on x86, arm64 on ARM)
+bash scripts/install.sh auto # default, based on host arch
+```
+
+> **Important:** `32` mode requires a **32-bit Python/userspace**. A 64-bit Python process cannot load a 32-bit Flash plugin.
+
 The script auto-detects your distribution and calls the right package manager:
 
 | Distribution | Package manager |
