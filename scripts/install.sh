@@ -184,7 +184,7 @@ PY
         pip install "${non_qt_deps[@]}"
     fi
 
-    if ! python3 - <<'PY'
+    if ! python - <<'PY'
 try:
     import PyQt5  # noqa: F401
     from PyQt5 import QtWebEngineWidgets  # noqa: F401
