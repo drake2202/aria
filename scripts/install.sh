@@ -186,7 +186,6 @@ PY
 
     if ! python - <<'PY'
 try:
-    import PyQt5  # noqa: F401
     from PyQt5 import QtWebEngineWidgets  # noqa: F401
 except ImportError:
     raise SystemExit(1)
