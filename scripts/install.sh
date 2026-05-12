@@ -135,7 +135,13 @@ setup_python_env() {
     # shellcheck source=/dev/null
     source .venv/bin/activate
     pip install --upgrade pip
-    pip install -e .
+    # Keep Qt bindings from distro packages (installed above) to avoid pip
+    # attempting source builds on ARM/SBC systems.
+    pip install -e . --no-deps
+    pip install \
+        "requests>=2.28" \
+        "keyring>=24.0" \
+        "aiohttp>=3.8"
 }
 
 # ---------------------------------------------------------------------------

@@ -47,6 +47,10 @@ The script auto-detects your distribution and calls the right package manager:
 | openSUSE Leap / Tumbleweed | `zypper` |
 | Alpine Linux | `apk` |
 
+On Linux, the installer uses distro packages for **PyQt5/PyQtWebEngine** and then installs the
+remaining Python dependencies in the virtual environment. This avoids pip source-build/license
+prompts that can happen on some ARM64 SBC setups.
+
 After the script finishes, skip to [Running the app](#running-the-app).
 
 #### Manual setup (optional)
