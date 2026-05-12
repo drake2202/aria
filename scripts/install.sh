@@ -185,9 +185,11 @@ PY
     fi
 
     if ! python3 - <<'PY'
-import importlib
-importlib.import_module("PyQt5")
-importlib.import_module("PyQt5.QtWebEngineWidgets")
+try:
+    import PyQt5  # noqa: F401
+    from PyQt5 import QtWebEngineWidgets  # noqa: F401
+except Exception:
+    raise SystemExit(1)
 PY
     then
         echo ""
