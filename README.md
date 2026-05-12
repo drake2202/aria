@@ -2,6 +2,8 @@
 
 Native macOS and Linux launcher for **Legend Online** (Flash game) using PyQt5 + PepperFlash PPAPI.
 
+Supported platforms: **x86_64** and **ARM64** on any major Linux distribution, plus macOS.
+
 ---
 
 ## Requirements
@@ -26,7 +28,30 @@ git clone https://github.com/drake2202/aria.git
 cd aria
 ```
 
-### 2. Create a virtual environment and install dependencies
+### 2. Install system dependencies and Python packages
+
+The quickest way is the included distro-aware installer, which works on **any major Linux distribution** and both **x86_64 and ARM64**:
+
+```bash
+bash scripts/install.sh
+```
+
+The script auto-detects your distribution and calls the right package manager:
+
+| Distribution | Package manager |
+|---|---|
+| Ubuntu / Debian / Mint / Pop!_OS | `apt` |
+| Fedora | `dnf` |
+| RHEL / CentOS / AlmaLinux / Rocky | `dnf` or `yum` |
+| Arch / Manjaro / EndeavourOS | `pacman` |
+| openSUSE Leap / Tumbleweed | `zypper` |
+| Alpine Linux | `apk` |
+
+After the script finishes, skip to [Running the app](#running-the-app).
+
+#### Manual setup (optional)
+
+If you prefer to manage dependencies yourself:
 
 ```bash
 python3 -m venv .venv
@@ -34,7 +59,7 @@ source .venv/bin/activate          # macOS / Linux
 pip install -e .
 ```
 
-> **Windows** is not yet supported. The launcher targets macOS and Linux only.
+> **Windows** is not supported. The launcher targets macOS and Linux only.
 
 ---
 
@@ -53,6 +78,16 @@ aria
 
 ---
 
+## ARM64 Support
+
+Aria runs natively on **ARM64 (aarch64)** Linux machines (Raspberry Pi 4/5, Apple Silicon Linux VMs, AWS Graviton, etc.).
+
+> **Note:** PepperFlash is not available for ARM64 from Adobe. On ARM64 the launcher will start but Flash-dependent content may not render. All non-Flash features (server list, account management, proxy) work normally.
+
+AppImages for both **x86_64** and **aarch64** are published for every release.
+
+---
+
 ## Flash Plugin
 
 The PepperFlash plugins are bundled in the `flash/` directory:
@@ -60,11 +95,13 @@ The PepperFlash plugins are bundled in the `flash/` directory:
 ```
 flash/
 ├── linux/
-│   ├── x64/libpepflashplayer.so   ← Linux 64-bit
-│   └── ia32/libpepflashplayer.so  ← Linux 32-bit
+│   ├── x64/libpepflashplayer.so    ← Linux x86_64
+│   └── ia32/libpepflashplayer.so   ← Linux 32-bit x86
 └── mac/
     └── x64/PepperFlashPlayer.plugin  ← macOS
 ```
+
+> **ARM64 note:** Adobe never released a PepperFlash plugin for Linux ARM64. The `arm64` sub-directory is not included in the bundle. On ARM64 machines the launcher starts normally but Flash-dependent game content will not render (same as the message shown in the [ARM64 Support](#arm64-support) section above).
 
 The launcher auto-detects your OS and architecture at startup — no configuration needed.
 
