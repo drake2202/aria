@@ -138,10 +138,28 @@ setup_python_env() {
     # Keep Qt bindings from distro packages (installed above) to avoid pip
     # attempting source builds on ARM/SBC systems.
     pip install -e . --no-deps
-    pip install \
-        "requests>=2.28" \
-        "keyring>=24.0" \
-        "aiohttp>=3.8"
+
+    # Install non-Qt runtime deps from pyproject.toml (single source of truth).
+    mapfile -t non_qt_deps < <(python3 - <<'PY'
+import pathlib
+import re
+import tomllib
+
+pyproject = pathlib.Path("pyproject.toml")
+data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
+deps = data.get("project", {}).get("dependencies", [])
+
+for dep in deps:
+    pkg = re.split(r"[<>=!~\\[\\s]", dep, maxsplit=1)[0].lower()
+    if pkg in {"pyqt5", "pyqtwebengine"}:
+        continue
+    print(dep)
+PY
+)
+
+    if [ "${#non_qt_deps[@]}" -gt 0 ]; then
+        pip install "${non_qt_deps[@]}"
+    fi
 }
 
 # ---------------------------------------------------------------------------
