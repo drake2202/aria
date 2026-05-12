@@ -25,6 +25,10 @@ _ARCH_MAP: dict[str, str] = {
 }
 
 
+def _is_arm_arch(arch: str) -> bool:
+    return arch.startswith("arm") or arch in {"aarch64", "arm64"}
+
+
 def _resolve_arch_dir() -> str:
     override_raw = os.getenv("ARIA_FLASH_ARCH", "").strip().lower()
     if override_raw:
@@ -36,7 +40,7 @@ def _resolve_arch_dir() -> str:
         }
         if override_raw in {"32", "64"}:
             host_arch = platform.machine().lower()
-            is_arm_host = host_arch.startswith("arm") or host_arch in {"aarch64", "arm64"}
+            is_arm_host = _is_arm_arch(host_arch)
             if override_raw == "32":
                 return "armhf" if is_arm_host else "ia32"
             return "arm64" if is_arm_host else "x64"
@@ -44,7 +48,7 @@ def _resolve_arch_dir() -> str:
         if arch_dir:
             return arch_dir
         log.warning(
-            "Invalid ARIA_FLASH_ARCH='%s'; supported values: 32, 64, ia32, x64, arm64, armhf",
+            "Invalid ARIA_FLASH_ARCH='%s'; supported values: 32, 64, ia32, x64, arm64, armhf; using host auto-detection",
             override_raw,
         )
 

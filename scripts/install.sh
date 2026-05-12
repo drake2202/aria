@@ -290,8 +290,11 @@ PY
 
     local activate_file="$REPO_ROOT/.venv/bin/activate"
     if [ -f "$activate_file" ]; then
-        awk '!/^export ARIA_FLASH_ARCH=/' "$activate_file" > "${activate_file}.tmp" && \
-            mv "${activate_file}.tmp" "$activate_file"
+        awk '!/^export ARIA_FLASH_ARCH=/' "$activate_file" > "${activate_file}.tmp" || {
+            echo "Error: failed to update $activate_file" >&2
+            exit 1
+        }
+        mv "${activate_file}.tmp" "$activate_file"
         printf '\nexport ARIA_FLASH_ARCH="%s"\n' "$FLASH_ARCH" >> "$activate_file"
     fi
 }
@@ -306,7 +309,8 @@ PY_BITS=$(python_bitness)
 echo "Python bitness: ${PY_BITS}-bit"
 validate_bitness_mode "$PY_BITS"
 FLASH_ARCH=$(resolve_flash_arch "$ARCH")
-echo "Flash plugin arch mode: $INSTALL_MODE (ARIA_FLASH_ARCH=$FLASH_ARCH)"
+echo "Flash plugin arch mode: $INSTALL_MODE"
+echo "Resolved ARIA_FLASH_ARCH=$FLASH_ARCH"
 
 check_python_version
 DISTRO=$(detect_distro)
