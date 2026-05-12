@@ -150,7 +150,7 @@ data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
 deps = data.get("project", {}).get("dependencies", [])
 
 for dep in deps:
-    pkg = re.split(r"[<>=!~\\[\\s]", dep, maxsplit=1)[0].lower()
+    pkg = re.split(r"[<>=!~\[\s]", dep, maxsplit=1)[0].lower()
     if pkg in {"pyqt5", "pyqtwebengine"}:
         continue
     print(dep)
