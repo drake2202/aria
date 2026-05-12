@@ -290,7 +290,7 @@ PY
 
     local activate_file="$REPO_ROOT/.venv/bin/activate"
     if [ -f "$activate_file" ]; then
-        awk '!/^export ARIA_FLASH_ARCH=/' "$activate_file" > "${activate_file}.tmp" || {
+        sed '/^export ARIA_FLASH_ARCH=/d' "$activate_file" > "${activate_file}.tmp" || {
             echo "Error: failed to update $activate_file" >&2
             exit 1
         }
