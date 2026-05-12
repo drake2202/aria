@@ -37,6 +37,8 @@ def _resolve_arch_dir() -> str:
             "x64": "x64",
             "arm64": "arm64",
             "armhf": "armhf",
+            "armv7l": "armhf",
+            "armv8l": "armhf",
         }
         if override_raw in {"32", "64"}:
             host_arch = platform.machine().lower()
@@ -48,7 +50,7 @@ def _resolve_arch_dir() -> str:
         if arch_dir:
             return arch_dir
         log.warning(
-            "Invalid ARIA_FLASH_ARCH='%s'; supported values: ia32, x64, arm64, armhf, 32, 64; using host auto-detection",
+            "Invalid ARIA_FLASH_ARCH='%s'; supported values: ia32, x64, arm64, armhf, armv7l, armv8l, 32, 64; using host auto-detection",
             override_raw,
         )
 

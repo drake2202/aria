@@ -290,11 +290,16 @@ PY
 
     local activate_file="$REPO_ROOT/.venv/bin/activate"
     if [ -f "$activate_file" ]; then
+        local file_mode
+        file_mode=$(stat -c '%a' "$activate_file" 2>/dev/null || true)
         sed '/^export ARIA_FLASH_ARCH=/d' "$activate_file" > "${activate_file}.tmp" || {
             echo "Error: failed to update $activate_file" >&2
             exit 1
         }
         mv "${activate_file}.tmp" "$activate_file"
+        if [ -n "$file_mode" ]; then
+            chmod "$file_mode" "$activate_file"
+        fi
         printf '\nexport ARIA_FLASH_ARCH="%s"\n' "$FLASH_ARCH" >> "$activate_file"
     fi
 }
