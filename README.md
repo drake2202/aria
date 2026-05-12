@@ -59,7 +59,7 @@ source .venv/bin/activate          # macOS / Linux
 pip install -e .
 ```
 
-> **Windows** is not supported. The launcher targets macOS and Linux only.
+> **Windows** is not yet supported. The launcher targets macOS and Linux only.
 
 ---
 

@@ -27,7 +27,7 @@ class LinuxFlashAdapter(FlashAdapter):
         arch = platform.machine().lower()
         arch_dir = _ARCH_MAP.get(arch)
         if arch_dir is None:
-            log.warning("Unrecognised Linux architecture '%s'; defaulting to x64 flash path", arch)
+            log.warning("Unrecognized Linux architecture '%s'; defaulting to x64 flash path", arch)
             arch_dir = "x64"
         bundled = _find(f"flash/linux/{arch_dir}/libpepflashplayer.so")
         if bundled.exists():
