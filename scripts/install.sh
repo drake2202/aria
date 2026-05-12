@@ -39,15 +39,38 @@ check_python_version() {
 # Distro detection
 # ---------------------------------------------------------------------------
 detect_distro() {
+    local distro="unknown"
     if [ -f /etc/os-release ]; then
         # shellcheck source=/dev/null
         . /etc/os-release
-        echo "${ID:-unknown}"
+        distro="${ID:-unknown}"
     elif command -v lsb_release &>/dev/null; then
-        lsb_release -si | tr '[:upper:]' '[:lower:]'
-    else
-        echo "unknown"
+        distro="$(lsb_release -si | tr '[:upper:]' '[:lower:]')"
     fi
+
+    case "$distro" in
+        ubuntu|debian|linuxmint|pop|zorin|elementary|neon|kali|parrot|\
+        fedora|rhel|centos|almalinux|rocky|ol|\
+        arch|manjaro|endeavouros|garuda|artix|\
+        opensuse*|suse*|opensuse-leap|opensuse-tumbleweed|alpine)
+            echo "$distro"
+            return
+            ;;
+    esac
+
+    if [ -n "${ID_LIKE:-}" ]; then
+        for family in ${ID_LIKE}; do
+            case "$(echo "$family" | tr '[:upper:]' '[:lower:]')" in
+                debian) echo "debian"; return ;;
+                rhel|fedora) echo "fedora"; return ;;
+                arch) echo "arch"; return ;;
+                suse) echo "opensuse"; return ;;
+                alpine) echo "alpine"; return ;;
+            esac
+        done
+    fi
+
+    echo "$distro"
 }
 
 # ---------------------------------------------------------------------------
@@ -131,7 +154,7 @@ setup_python_env() {
     cd "$REPO_ROOT"
     echo ""
     echo "Setting up Python virtual environment..."
-    python3 -m venv .venv
+    python3 -m venv .venv --system-site-packages
     # shellcheck source=/dev/null
     source .venv/bin/activate
     pip install --upgrade pip
@@ -159,6 +182,20 @@ PY
 
     if [ "${#non_qt_deps[@]}" -gt 0 ]; then
         pip install "${non_qt_deps[@]}"
+    fi
+
+    if ! python - <<'PY'
+try:
+    from PyQt5 import QtWebEngineWidgets  # noqa: F401
+except ImportError:
+    raise SystemExit(1)
+PY
+    then
+        echo ""
+        echo "Error: PyQt5/PyQtWebEngine are not available to this environment."
+        echo "Install the distro packages (for Debian/Ubuntu: python3-pyqt5 python3-pyqt5.qtwebengine),"
+        echo "or pip wheels on supported platforms, then re-run this script."
+        exit 1
     fi
 }
 
