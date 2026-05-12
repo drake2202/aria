@@ -188,13 +188,14 @@ PY
 try:
     import PyQt5  # noqa: F401
     from PyQt5 import QtWebEngineWidgets  # noqa: F401
-except Exception:
+except ImportError:
     raise SystemExit(1)
 PY
     then
         echo ""
         echo "Error: PyQt5/PyQtWebEngine are not available to this environment."
-        echo "Install the distro packages (or pip wheels on supported platforms), then re-run this script."
+        echo "Install the distro packages (for Debian/Ubuntu: python3-pyqt5 python3-pyqt5.qtwebengine),"
+        echo "or pip wheels on supported platforms, then re-run this script."
         exit 1
     fi
 }
