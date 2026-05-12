@@ -50,7 +50,7 @@ def _resolve_arch_dir() -> str:
         if arch_dir:
             return arch_dir
         log.warning(
-            "Invalid ARIA_FLASH_ARCH='%s'; supported values: ia32, x64, arm64, armhf, armv7l, armv8l, 32, 64; using host auto-detection",
+            "Invalid ARIA_FLASH_ARCH='%s'; supported values: ia32, x64, arm64, armhf (or armv7l/armv8l), 32, 64; using host auto-detection",
             override_raw,
         )
 

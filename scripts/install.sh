@@ -291,8 +291,8 @@ PY
     local activate_file="$REPO_ROOT/.venv/bin/activate"
     if [ -f "$activate_file" ]; then
         local file_mode
-        file_mode=$(stat -c '%a' "$activate_file" 2>/dev/null || true)
-        sed '/^export ARIA_FLASH_ARCH=/d' "$activate_file" > "${activate_file}.tmp" || {
+        file_mode=$(stat -c '%a' "$activate_file" 2>/dev/null || stat -f '%Lp' "$activate_file" 2>/dev/null || true)
+        sed '/^[[:space:]]*export[[:space:]]*ARIA_FLASH_ARCH=/d' "$activate_file" > "${activate_file}.tmp" || {
             echo "Error: failed to update $activate_file" >&2
             exit 1
         }
