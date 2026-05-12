@@ -290,8 +290,8 @@ PY
 
     local activate_file="$REPO_ROOT/.venv/bin/activate"
     if [ -f "$activate_file" ]; then
-        awk '!/^export ARIA_FLASH_ARCH=/' "$activate_file" > "${activate_file}.tmp"
-        mv "${activate_file}.tmp" "$activate_file"
+        awk '!/^export ARIA_FLASH_ARCH=/' "$activate_file" > "${activate_file}.tmp" && \
+            mv "${activate_file}.tmp" "$activate_file"
         printf '\nexport ARIA_FLASH_ARCH="%s"\n' "$FLASH_ARCH" >> "$activate_file"
     fi
 }

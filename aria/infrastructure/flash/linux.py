@@ -29,13 +29,17 @@ def _resolve_arch_dir() -> str:
     override_raw = os.getenv("ARIA_FLASH_ARCH", "").strip().lower()
     if override_raw:
         override_map = {
-            "32": "ia32",
-            "64": "x64",
             "ia32": "ia32",
             "x64": "x64",
             "arm64": "arm64",
             "armhf": "armhf",
         }
+        if override_raw in {"32", "64"}:
+            host_arch = platform.machine().lower()
+            is_arm_host = host_arch.startswith("arm") or host_arch in {"aarch64", "arm64"}
+            if override_raw == "32":
+                return "armhf" if is_arm_host else "ia32"
+            return "arm64" if is_arm_host else "x64"
         arch_dir = override_map.get(override_raw)
         if arch_dir:
             return arch_dir
