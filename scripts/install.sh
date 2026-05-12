@@ -93,7 +93,7 @@ validate_bitness_mode() {
         32)
             if [ "$bits" -ne 32 ]; then
                 echo "Error: install mode '32' requires 32-bit Python/userspace (detected ${bits}-bit Python)." >&2
-                echo "Run this installer from a 32-bit environment, then launch Aria from that same environment." >&2
+                echo "Run this installer and launch Aria from a 32-bit environment with 32-bit Python." >&2
                 exit 1
             fi
             ;;
@@ -290,7 +290,8 @@ PY
 
     local activate_file="$REPO_ROOT/.venv/bin/activate"
     if [ -f "$activate_file" ]; then
-        sed -i '/^export ARIA_FLASH_ARCH=/d' "$activate_file"
+        awk '!/^export ARIA_FLASH_ARCH=/' "$activate_file" > "${activate_file}.tmp"
+        mv "${activate_file}.tmp" "$activate_file"
         printf '\nexport ARIA_FLASH_ARCH="%s"\n' "$FLASH_ARCH" >> "$activate_file"
     fi
 }
