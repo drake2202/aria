@@ -10,7 +10,17 @@ permissions:
 
 jobs:
   build-linux:
-    runs-on: ubuntu-latest
+    name: Build Linux AppImage (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-latest
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+
     steps:
       - uses: actions/checkout@v4
 
@@ -30,7 +40,7 @@ jobs:
       - name: Upload Linux artifact
         uses: actions/upload-artifact@v4
         with:
-          name: aria-linux
+          name: aria-linux-${{ matrix.arch }}
           path: dist/*.AppImage
 
   build-macos:

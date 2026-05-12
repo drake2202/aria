@@ -1,0 +1,155 @@
+#!/bin/bash
+# Aria — distro-aware dependency installer
+#
+# Detects the Linux distribution via /etc/os-release and installs the required
+# system packages using the appropriate package manager, then creates a Python
+# virtual environment and installs the Python dependencies.
+#
+# Supported package managers: apt, dnf, yum, pacman, zypper, apk
+#
+# Usage:
+#   bash scripts/install.sh
+
+set -e
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PYTHON_MIN_MAJOR=3
+PYTHON_MIN_MINOR=10
+
+# ---------------------------------------------------------------------------
+# Python version check
+# ---------------------------------------------------------------------------
+check_python_version() {
+    if ! command -v python3 &>/dev/null; then
+        echo "Error: python3 not found. Please install Python ${PYTHON_MIN_MAJOR}.${PYTHON_MIN_MINOR}+ first." >&2
+        exit 1
+    fi
+    PY_VERSION=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+    PY_MAJOR=$(python3 -c "import sys; print(sys.version_info.major)")
+    PY_MINOR=$(python3 -c "import sys; print(sys.version_info.minor)")
+    if [ "$PY_MAJOR" -lt "$PYTHON_MIN_MAJOR" ] || \
+       { [ "$PY_MAJOR" -eq "$PYTHON_MIN_MAJOR" ] && [ "$PY_MINOR" -lt "$PYTHON_MIN_MINOR" ]; }; then
+        echo "Error: Python ${PYTHON_MIN_MAJOR}.${PYTHON_MIN_MINOR}+ is required (found ${PY_VERSION})." >&2
+        exit 1
+    fi
+    echo "Python version: ${PY_VERSION} ✓"
+}
+
+# ---------------------------------------------------------------------------
+# Distro detection
+# ---------------------------------------------------------------------------
+detect_distro() {
+    if [ -f /etc/os-release ]; then
+        # shellcheck source=/dev/null
+        . /etc/os-release
+        echo "${ID:-unknown}"
+    elif command -v lsb_release &>/dev/null; then
+        lsb_release -si | tr '[:upper:]' '[:lower:]'
+    else
+        echo "unknown"
+    fi
+}
+
+# ---------------------------------------------------------------------------
+# System package installation
+# ---------------------------------------------------------------------------
+install_system_deps() {
+    local distro="$1"
+    echo "Detected Linux distribution: $distro"
+
+    case "$distro" in
+        ubuntu|debian|linuxmint|pop|zorin|elementary|neon|kali|parrot)
+            echo "Using apt..."
+            sudo apt-get update -q
+            sudo apt-get install -y \
+                python3 python3-pip python3-venv \
+                python3-pyqt5 python3-pyqt5.qtwebengine \
+                libxcb-xinerama0 libxcb-icccm4 libxcb-image0 \
+                libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 \
+                libxcb-shape0 libxcb-xkb1 libxkbcommon-x11-0 \
+                libsecret-1-0 libdbus-1-3
+            ;;
+        fedora)
+            echo "Using dnf..."
+            sudo dnf install -y \
+                python3 python3-pip python3-virtualenv \
+                python3-pyqt5 python3-qt5-webengine \
+                xcb-util-wm xcb-util-image xcb-util-keysyms \
+                xcb-util-renderutil libxkbcommon-x11 \
+                libsecret dbus-libs
+            ;;
+        rhel|centos|almalinux|rocky|ol)
+            echo "Using dnf/yum..."
+            PKG_MGR=$(command -v dnf 2>/dev/null || echo yum)
+            sudo "$PKG_MGR" install -y \
+                python3 python3-pip \
+                xcb-util-wm xcb-util-image xcb-util-keysyms \
+                xcb-util-renderutil libxkbcommon-x11 \
+                libsecret dbus-libs
+            ;;
+        arch|manjaro|endeavouros|garuda|artix)
+            echo "Using pacman..."
+            sudo pacman -Sy --noconfirm \
+                python python-pip python-pyqt5 python-pyqtwebengine \
+                xcb-util-wm xcb-util-image xcb-util-keysyms \
+                xcb-util-renderutil libxkbcommon-x11 \
+                libsecret dbus
+            ;;
+        opensuse*|suse*|opensuse-leap|opensuse-tumbleweed)
+            echo "Using zypper..."
+            sudo zypper install -y \
+                python3 python3-pip \
+                python3-qt5 python3-pyqtwebengine \
+                libxcb-xinerama0 libxkbcommon-x11-0 \
+                libsecret-1-0 libdbus-1-3
+            ;;
+        alpine)
+            echo "Using apk..."
+            sudo apk add --no-cache \
+                python3 py3-pip \
+                py3-pyqt5 \
+                xcb-util-wm xcb-util-image xcb-util-keysyms \
+                xcb-util-renderutil libxkbcommon-x11 \
+                libsecret dbus
+            ;;
+        *)
+            echo ""
+            echo "Warning: Unknown or unsupported distribution '${distro}'."
+            echo "Please install the following manually before continuing:"
+            echo "  - Python 3.10+"
+            echo "  - PyQt5 5.15+ and PyQtWebEngine 5.15+"
+            echo "  - libxcb-xinerama, libxkbcommon-x11, libsecret, dbus"
+            echo ""
+            ;;
+    esac
+}
+
+# ---------------------------------------------------------------------------
+# Python environment setup
+# ---------------------------------------------------------------------------
+setup_python_env() {
+    cd "$REPO_ROOT"
+    echo ""
+    echo "Setting up Python virtual environment..."
+    python3 -m venv .venv
+    # shellcheck source=/dev/null
+    source .venv/bin/activate
+    pip install --upgrade pip
+    pip install -e .
+}
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+ARCH=$(uname -m)
+echo "Host architecture: $ARCH"
+
+check_python_version
+DISTRO=$(detect_distro)
+install_system_deps "$DISTRO"
+setup_python_env
+
+echo ""
+echo "Installation complete!"
+echo "To start Aria, run:"
+echo "  source .venv/bin/activate && python3 -m aria"
