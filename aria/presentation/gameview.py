@@ -16,16 +16,14 @@ Architecture:
 """
 
 import logging
-import os
-import sys
+import shutil
 
-from PyQt5.QtCore import QUrl, pyqtSignal, Qt
+from PyQt5.QtCore import QUrl, Qt, pyqtSignal
 from PyQt5.QtWebEngineWidgets import (
-    QWebEngineView,
     QWebEnginePage,
     QWebEngineProfile,
     QWebEngineSettings,
-    QWebEngineScript,
+    QWebEngineView,
 )
 from PyQt5.QtWidgets import QWidget, QVBoxLayout
 
@@ -59,6 +57,7 @@ class GameView(QWidget):
     game_frame_loaded = pyqtSignal(str)
     # Emitted on every loadFinished with the page URL
     page_loaded = pyqtSignal(str)
+    load_failed = pyqtSignal(str)
 
     def __init__(self, account_email: str = "", parent=None):
         super().__init__(parent)
@@ -77,6 +76,8 @@ class GameView(QWidget):
         self._profile = QWebEngineProfile(profile_name, self)
         self._profile.setCachePath(str(account_cache / "webengine-cache"))
         self._profile.setPersistentStoragePath(str(account_data / "webengine-data"))
+        self._cache_path = account_cache / "webengine-cache"
+        self._storage_path = account_data / "webengine-data"
         self._profile.setHttpCacheType(QWebEngineProfile.DiskHttpCache)
         self._profile.setHttpCacheMaximumSize(1024 * 1024 * 1024)  # 1 GB for heavy Flash assets
         self._profile.setPersistentCookiesPolicy(QWebEngineProfile.ForcePersistentCookies)
@@ -113,6 +114,36 @@ class GameView(QWidget):
         log.info("Loading URL: %s", url)
         self._view.load(QUrl(url))
 
+    def load_blank_page(self):
+        self._page.setHtml(
+            "<html><body style='margin:0;background:#000;'></body></html>",
+            QUrl("about:blank"),
+        )
+
+    def navigate_back(self):
+        self._view.back()
+
+    def navigate_forward(self):
+        self._view.forward()
+
+    def navigate_reload(self):
+        self._view.reload()
+
+    def navigate_stop(self):
+        self._view.stop()
+
+    def clear_browser_data(self):
+        self._profile.clearHttpCache()
+        self._profile.cookieStore().deleteAllCookies()
+        self._profile.clearAllVisitedLinks()
+        for path in (self._cache_path, self._storage_path):
+            try:
+                if path.exists():
+                    shutil.rmtree(path)
+                path.mkdir(parents=True, exist_ok=True)
+            except OSError as e:
+                log.warning("Failed to clear browser path %s: %s", path, e)
+
     def inject_login(self, email: str, password: str, callback=None):
         """Auto-fill and submit login on the serverlist page.
         callback(bool) is called with True if fields were found, False otherwise."""
@@ -139,7 +170,9 @@ class GameView(QWidget):
 
     def _on_load_finished(self, ok):
         if not ok:
-            log.warning("Page load failed")
+            url = self._page.url().toString()
+            log.warning("Page load failed: %s", url)
+            self.load_failed.emit(url)
             return
 
         current_url = self._page.url().toString()

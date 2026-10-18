@@ -30,6 +30,13 @@ def _session_file_for_email(email: str, create_dirs: bool = False) -> Path:
     return cfg_dir / "last_server.json"
 
 
+def _bookmarks_file_for_email(email: str, create_dirs: bool = False) -> Path:
+    cfg_dir = account_paths(email)["config"]
+    if create_dirs:
+        cfg_dir.mkdir(parents=True, exist_ok=True)
+    return cfg_dir / "bookmarks.json"
+
+
 def load_account_session(email: str) -> tuple[str, int, str]:
     """Return (region, server_id, password) for an account."""
     session_file = _session_file_for_email(email)
@@ -98,3 +105,39 @@ def list_local_accounts() -> list[dict[str, object]]:
         seen.add(email)
         dedup.append(item)
     return dedup
+
+
+def load_bookmarks(email: str) -> list[dict[str, str]]:
+    """Load per-account bookmarks from config dir."""
+    bookmarks_file = _bookmarks_file_for_email(email)
+    try:
+        if not bookmarks_file.exists():
+            return []
+        raw = json.loads(bookmarks_file.read_text())
+        if not isinstance(raw, list):
+            return []
+        bookmarks: list[dict[str, str]] = []
+        for item in raw:
+            if not isinstance(item, dict):
+                continue
+            name = str(item.get("name", "")).strip()
+            url = str(item.get("url", "")).strip()
+            if not name or not url:
+                continue
+            bookmarks.append({"name": name, "url": url})
+        return bookmarks
+    except Exception:
+        return []
+
+
+def save_bookmarks(email: str, bookmarks: list[dict[str, str]]) -> None:
+    """Persist per-account bookmarks to config dir."""
+    bookmarks_file = _bookmarks_file_for_email(email, create_dirs=True)
+    serialized = []
+    for item in bookmarks:
+        name = str(item.get("name", "")).strip()
+        url = str(item.get("url", "")).strip()
+        if not name or not url:
+            continue
+        serialized.append({"name": name, "url": url})
+    bookmarks_file.write_text(json.dumps(serialized, indent=2))
