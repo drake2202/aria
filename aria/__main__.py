@@ -17,38 +17,47 @@ import sys
 import threading
 from pathlib import Path
 
+from aria.infrastructure.flash import create_flash_adapter
+
 # ── Flash flags and Qt Env MUST be configured before any Qt import ─────────────
 if sys.platform == "darwin":
     # Required for QtWebEngine inside PyInstaller .app bundle on macOS
     os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = "--no-sandbox"
     os.environ["QTWEBENGINE_DISABLE_SANDBOX"] = "1"
-    from aria.infrastructure.flash.macos import MacOSFlashAdapter as _FlashAdapter
-else:
-    from aria.infrastructure.flash.linux import LinuxFlashAdapter as _FlashAdapter
-
-_flash = _FlashAdapter()
+_flash = create_flash_adapter()
 _flash.configure()
 # ─────────────────────────────────────────────────────────────────────────────
 
 from PyQt5.QtWidgets import QApplication  # noqa: E402
 
+from aria.domain.services import LauncherService  # noqa: E402
 from aria.infrastructure.config import (  # noqa: E402
-    DATA_DIR, CACHE_DIR, CONFIG_DIR, SERVER_CACHE_DIR, LO_REGIONS,
+    CACHE_DIR,
+    CONFIG_DIR,
+    DATA_DIR,
+    SERVER_CACHE_DIR,
 )
 from aria.infrastructure.credentials import SystemCredentialStore  # noqa: E402
-from aria.infrastructure.serverlist import CachedServerRepository  # noqa: E402
 from aria.infrastructure.h2proxy import H2Proxy  # noqa: E402
-from aria.domain.services import LauncherService  # noqa: E402
-from aria.presentation.login_dialog import LoginDialog  # noqa: E402
+from aria.infrastructure.serverlist import CachedServerRepository  # noqa: E402
 from aria.presentation.gamewindow import GameWindow  # noqa: E402
-from aria.presentation.stylesheet import LOGIN_STYLE, GAME_WINDOW_STYLE  # noqa: E402
+from aria.presentation.login_dialog import LoginDialog  # noqa: E402
+from aria.presentation.stylesheet import GAME_WINDOW_STYLE, LOGIN_STYLE  # noqa: E402
 
 APP_NAME  = "Aria"
 APP_TITLE = "Aria — Legend Online"
 
 log = logging.getLogger("aria")
 
-_MMS_CFG = Path.home() / ".macromedia" / "mms.cfg"
+if sys.platform == "win32":
+    _MMS_CFG = (
+        Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming"))
+        / "Macromedia"
+        / "Flash Player"
+        / "mms.cfg"
+    )
+else:
+    _MMS_CFG = Path.home() / ".macromedia" / "mms.cfg"
 _MMS_CONTENT = """\
 EOLUninstallDisable=1
 SilentAutoUpdateEnable=0

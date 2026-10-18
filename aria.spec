@@ -14,6 +14,7 @@ a = Analysis(
     hiddenimports=[
         'PyQt5.QtWebEngineWidgets',
         'keyring.backends.macOS',
+        'keyring.backends.Windows',
         'keyring.backends.SecretService',
         'keyring.backends.kwallet',
         'keyring.backends.chainer',
