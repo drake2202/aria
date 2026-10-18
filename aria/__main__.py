@@ -6,7 +6,7 @@ Boot sequence:
   2. Build infrastructure (credential store, server repo, cache dirs)
   3. Wire domain service via DI
   4. Start H2Proxy background thread
-  5. Show LoginDialog → GameWindow
+  5. Show browser-style GameWindow (login/server picker available from menu)
 """
 
 import asyncio
@@ -41,8 +41,7 @@ from aria.infrastructure.credentials import SystemCredentialStore  # noqa: E402
 from aria.infrastructure.h2proxy import H2Proxy  # noqa: E402
 from aria.infrastructure.serverlist import CachedServerRepository  # noqa: E402
 from aria.presentation.gamewindow import GameWindow  # noqa: E402
-from aria.presentation.login_dialog import LoginDialog  # noqa: E402
-from aria.presentation.stylesheet import GAME_WINDOW_STYLE, LOGIN_STYLE  # noqa: E402
+from aria.presentation.stylesheet import GAME_WINDOW_STYLE  # noqa: E402
 
 APP_NAME  = "Aria"
 APP_TITLE = "Aria — Legend Online"
@@ -145,30 +144,11 @@ def main() -> None:
     # ── Qt application ───────────────────────────────────────────────────────
     app = QApplication(sys.argv)
     app.setApplicationName(APP_NAME)
-    app.setStyleSheet(LOGIN_STYLE)
+    app.setStyleSheet(GAME_WINDOW_STYLE)
     signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-    game_window = None
-
-    def on_server_chosen(server, email, password):
-        nonlocal game_window
-        # Persist credentials securely on successful login
-        if email and password:
-            launcher.save_credentials(email, password)
-        app.setStyleSheet(GAME_WINDOW_STYLE)
-        game_window = GameWindow(server, email, password, launcher=launcher)
-        game_window.show()
-
-    picker = LoginDialog(launcher=launcher)
-    picker.server_chosen.connect(on_server_chosen)
-
-    if picker.exec_() != LoginDialog.Accepted:
-        log.info("Server selection cancelled")
-        sys.exit(0)
-
-    if game_window is None:
-        log.error("Login accepted but no game window created")
-        sys.exit(1)
+    game_window = GameWindow(server=None, email="", password="", launcher=launcher)
+    game_window.show()
 
     exit_code = app.exec_()
     log.info("Shutting down")
