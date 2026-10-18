@@ -4,6 +4,7 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
+*.egg-info/
 
 # Virtual environment
 .venv/
@@ -41,3 +42,5 @@ build/
 # Flash plugin binaries — bundled in flash/ directory, tracked by git
 # Exclude only the old root-level copy (used before bundling)
 /PepperFlashPlayer.plugin/
+!flash/win/ia32/pepflashplayer.dll
+!flash/win/x64/pepflashplayer.dll

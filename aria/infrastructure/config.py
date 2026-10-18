@@ -26,6 +26,10 @@ if sys.platform == "darwin":
     DATA_DIR   = Path.home() / "Library" / "Application Support" / "Aria"
     CACHE_DIR  = Path.home() / "Library" / "Caches" / "Aria"
     CONFIG_DIR = Path.home() / "Library" / "Preferences" / "Aria"
+elif sys.platform == "win32":
+    DATA_DIR = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local")) / "Aria"
+    CACHE_DIR = DATA_DIR / "Cache"
+    CONFIG_DIR = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming")) / "Aria"
 else:
     DATA_DIR   = Path(os.environ.get("XDG_DATA_HOME",   Path.home() / ".local" / "share")) / "Aria"
     CACHE_DIR  = Path(os.environ.get("XDG_CACHE_HOME",  Path.home() / ".cache"))           / "Aria"

@@ -1,8 +1,8 @@
 # Aria — Legend Online Launcher
 
-Native macOS and Linux launcher for **Legend Online** (Flash game) using PyQt5 + PepperFlash PPAPI.
+Native macOS, Linux, and Windows launcher for **Legend Online** (Flash game) using PyQt5 + PepperFlash PPAPI.
 
-Supported platforms: **x86_64** and **ARM64** on any major Linux distribution, plus macOS.
+Supported platforms: **x86_64** and **ARM64** on any major Linux distribution, macOS, and Windows x64.
 
 ---
 
@@ -73,7 +73,14 @@ source .venv/bin/activate          # macOS / Linux
 pip install -e .
 ```
 
-> **Windows** is not yet supported. The launcher targets macOS and Linux only.
+### Windows setup (PowerShell)
+
+```powershell
+py -3.11 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -e .
+```
 
 ---
 
@@ -111,13 +118,44 @@ flash/
 ├── linux/
 │   ├── x64/libpepflashplayer.so    ← Linux x86_64
 │   └── ia32/libpepflashplayer.so   ← Linux 32-bit x86
+├── win/
+│   ├── x64/pepflashplayer.dll      ← Windows x64
+│   └── ia32/pepflashplayer.dll     ← Windows 32-bit
 └── mac/
     └── x64/PepperFlashPlayer.plugin  ← macOS
 ```
 
 > **ARM64 note:** Adobe never released a PepperFlash plugin for Linux ARM64. The `arm64` sub-directory is not included in the bundle. On ARM64 machines the launcher starts normally but Flash-dependent game content will not render (same as the message shown in the [ARM64 Support](#arm64-support) section above).
+> Source/license attribution for bundled Windows binaries is tracked in `flash/ATTRIBUTION.md`.
 
 The launcher auto-detects your OS and architecture at startup — no configuration needed.
+
+---
+
+## Release builds
+
+### Windows (ZIP)
+
+Prerequisites:
+- Windows 10/11 x64
+- Python 3.11+
+- PowerShell 5+ (or PowerShell 7+)
+
+Build command:
+
+```powershell
+python -m pip install --upgrade pip
+pip install pyinstaller
+pip install -e .
+.\scripts\build-windows.ps1
+```
+
+Output artifact:
+- `dist/Aria-Windows-x64.zip` (contains `aria.exe` and bundled runtime)
+
+Runtime prerequisites:
+- No separate Flash install is required (PepperFlash DLLs are bundled in `flash/win/...`).
+- Keep the unpacked `flash/` directory beside `aria.exe` (PyInstaller output already does this).
 
 ---
 
